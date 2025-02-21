@@ -4,6 +4,13 @@ on:
   push:
     paths:
       - '**.ipynb'
+  workflow_dispatch:  # 添加手动触发入口
+    inputs:
+      force_all:
+        description: 'Convert all notebooks (including unchanged)'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   convert-and-deploy:
@@ -11,6 +18,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # 如果是手动触发且选择强制全部转换，则拉取完整历史记录
+        with:
+          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && inputs.force_all && '0' || '1' }}
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -22,11 +33,23 @@ jobs:
 
       - name: Convert Notebooks to HTML
         run: |
-          find . -name '*.ipynb' -not -path './.ipynb_checkpoints/*' | while read file; do
-            output_dir="docs/$(dirname "${file#./}")"
-            mkdir -p "$output_dir"
-            jupyter nbconvert --to html --output-dir "$output_dir" "$file"
-          done
+          # 手动触发时可选强制转换全部文件
+          if ${{ github.event_name == 'workflow_dispatch' && inputs.force_all }}; then
+            find . -name '*.ipynb' -not -path './.ipynb_checkpoints/*' -exec bash -c '
+              output_dir="docs/$(dirname "{}")"
+              mkdir -p "$output_dir"
+              jupyter nbconvert --to html --output-dir "$output_dir" "{}"
+            ' \;
+          else
+            # 自动触发时仅处理变更文件
+            find . -name '*.ipynb' -not -path './.ynb_checkpoints/*' | while read file; do
+              if [[ -n $(git diff HEAD^ -- "$file") ]] || [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
+                output_dir="docs/$(dirname "${file#./}")"
+                mkdir -p "$output_dir"
+                jupyter nbconvert --to html --output-dir "$output_dir" "$file"
+              fi
+            done
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
