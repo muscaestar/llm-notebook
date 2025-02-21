@@ -1,6 +1,10 @@
 name: GitHub Actions Demo
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-#on: [push]
+on: 
+  push:
+    paths:
+      - '**.txt'
+  workflow_dispatch:  # 添加手动触发入口
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
