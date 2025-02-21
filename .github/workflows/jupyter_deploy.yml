@@ -1,0 +1,35 @@
+name: Jupyter Notebook to GitHub Pages
+
+on:
+  push:
+    paths:
+      - '**.ipynb'
+
+jobs:
+  convert-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install nbconvert
+        run: pip install nbconvert
+
+      - name: Convert Notebooks to HTML
+        run: |
+          find . -name '*.ipynb' -not -path './.ipynb_checkpoints/*' | while read file; do
+            output_dir="docs/$(dirname "${file#./}")"
+            mkdir -p "$output_dir"
+            jupyter nbconvert --to html --output-dir "$output_dir" "$file"
+          done
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
