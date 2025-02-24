@@ -100,7 +100,9 @@ jobs:
             echo "<li><a href='$(basename "$file")'>${file%.html}</a></li>" >> docs/index.html
           fi
         done
-        echo "</ul></body></html>" >> docs/index.html
+        echo "</ul>" >> docs/index.html
+        echo "<footer><p><a href='https://github.com/muscaestar/llm-notebook'>GitHub Repo: github.com/muscaestar/llm-notebook</a></p></footer>" >> docs/index.html
+        echo "</body></html>" >> docs/index.html
     
     - name: Commit and push if changed
       run: |
