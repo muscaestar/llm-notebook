@@ -48,8 +48,8 @@ jobs:
           for file in notebook/*.ipynb; do
             if [ -f "$file" ]; then
               echo "Processing file: $file"
-              # clean metadata from colab ref:https://github.com/jupyter/nbconvert/issues/1731
-              jq -M 'del(.metadata.widgets)' "$file" > "$file"  
+              # clean metadata from colab ref:https://github.com/jupyter/nbconvert/issues/1731 
+              jq 'del(.metadata.widgets)' "$file" > tmp.json && mv tmp.json "$file"
               if jupyter nbconvert --to html --output-dir=./docs "$file"; then
                 echo "✅ Successfully converted $file"
               else
