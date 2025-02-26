@@ -75,6 +75,7 @@ jobs:
               
               if [ $time_diff -le 24 ]; then
                 echo "Processing new file (committed within 24h): $file"
+                jq 'del(.metadata.widgets)' "$file" > tmp.json && mv tmp.json "$file"
                 if jupyter nbconvert --to html --output-dir=./docs "$file"; then
                   echo "✅ Successfully converted $file"
                 else
